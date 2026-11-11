@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2a0f14">
+<title>Le Dernier Dîner</title>
+<link rel="icon" href="data:,">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<section id="accueil" hidden>
+  <div class="blason">EGGER</div>
+  <h1 id="titre"></h1>
+  <p id="sousTitre" class="aide"></p>
+  <label>Numéro d'équipe <input id="inNum" type="number" inputmode="numeric" min="1" max="99"></label>
+  <label>Nom de l'équipe <input id="inNom" type="text" maxlength="30"></label>
+  <label>Code de départ <input id="inCode" type="text" autocapitalize="characters" autocomplete="off"></label>
+  <button id="btnCommencer" class="btn principal">Commencer l'enquête</button>
+  <p class="aide">Le code de départ vous est donné par l'organisateur au moment où votre vague part.</p>
+</section>
+
+<section id="attente" hidden></section>
+<section id="jeu" hidden>
+  <header>
+    <div><div id="nomEquipe"></div><div id="heure" class="aide"></div></div>
+    <div class="droite"><button id="btnSon" aria-label="Son"></button><div id="chrono">--:--</div></div>
+  </header>
+  <main id="vue"></main>
+  <nav class="onglets">
+    <button data-o="scanner"><span>📷</span>Scanner</button>
+    <button data-o="carte"><span>🗺️</span>Plan</button>
+    <button data-o="carnet"><span>📓</span>Carnet <i id="badgeCarnet"></i></button>
+    <button data-o="accuser"><span>⚖️</span>Accuser</button>
+    <button data-o="regles"><span>📜</span>Règles</button>
+  </nav>
+</section>
+
+<div id="modale" hidden><div id="modaleCorps"></div></div>
+<div id="cine" hidden></div>
+<div id="toasts"></div>
+
+<script src="lib/jsQR.js"></script>
+<script src="js/donnees.js"></script>
+<script src="js/heures.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

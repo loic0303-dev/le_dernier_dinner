@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Classement — Le Dernier Dîner</title>
+<style>
+body{font-family:system-ui,sans-serif;background:#10181a;color:#eee;margin:0;padding:16px;max-width:900px;margin:auto}
+h1{color:#e0b060}textarea{width:100%;height:110px;background:#1b2a2d;color:#eee;border:1px solid #456;border-radius:6px;padding:8px;font-family:monospace}
+button{background:#e0b060;border:0;border-radius:6px;padding:10px 16px;font-weight:700;cursor:pointer;margin:6px 6px 6px 0}
+table{width:100%;border-collapse:collapse;margin-top:14px}th,td{padding:7px 8px;border-bottom:1px solid #345;text-align:left}th{color:#e0b060}
+.bad{color:#f77}.warn{color:#fb4}.ok{color:#7d7}small{color:#9ab}
+</style></head><body>
+<h1>Classement — Le Dernier Dîner</h1>
+<p><small>Collez un code final par ligne (ou plusieurs d'un coup). Pour chaque équipe, seul le meilleur score est gardé. Égalité : plus d'indices, puis la plus rapide. Une équipe qui a lancé plusieurs parties est signalée. Tout reste dans ce navigateur.</small></p>
+<h2 style="color:#e0b060;font-size:1.1em">1. Au départ : enregistrer le code de chaque équipe</h2>
+<p><small>Une ligne par équipe : numéro puis code affiché par l'app (ex. « 7 MWZ »). Seuls les résultats dont le code correspond seront classés. Si une équipe redémarre sur un autre téléphone, ajoutez sa nouvelle ligne : son ancien code reste valable.</small></p>
+<textarea id="dep" style="height:70px" placeholder="7 MWZ&#10;8 K3P"></textarea><br>
+<button onclick="ajDep()">Enregistrer les départs</button><span id="nbdep"></span>
+<h2 style="color:#e0b060;font-size:1.1em">2. À l'arrivée : coller les codes finaux</h2>
+<textarea id="in" placeholder="T7-69-3-101-42-MWZ-1X7V"></textarea><br>
+<button onclick="ajouter()">Ajouter</button><button onclick="if(confirm('Tout effacer (départs et résultats) ?')){D=[];DEP={};sauver();try{localStorage.setItem(CLED,"{}")}catch(e){};vue()}" style="background:#a55">Effacer</button>
+<div id="msg"></div><div id="tab"></div>
+<script>
+const CLE="ldd_classement_v2", CLED="ldd_departs_v1", TOTAL=63; let DEP={}; try{DEP=JSON.parse(localStorage.getItem(CLED))||{}}catch(e){}
+function ajDep(){document.getElementById("dep").value.split(/\n+/).forEach(l=>{const m=l.trim().toUpperCase().match(/^(\d+)\D+([A-Z0-9]{3})$/);if(m){(DEP[+m[1]]=DEP[+m[1]]||[]).includes(m[2])||DEP[+m[1]].push(m[2])}});document.getElementById("dep").value="";try{localStorage.setItem(CLED,JSON.stringify(DEP))}catch(e){};vue()}
+const connu=d=>!Object.keys(DEP).length||(DEP[d.eq]||[]).includes(d.pid); let D=[]; try{D=JSON.parse(localStorage.getItem(CLE))||[]}catch(e){}
+const sauver=()=>{try{localStorage.setItem(CLE,JSON.stringify(D))}catch(e){}};
+function hash(brut){let h=0;for(const c of brut+"EGGER")h=(h*31+c.charCodeAt(0))%1679616;return h.toString(36).toUpperCase().padStart(4,"0")}
+function lire(l){
+  const m=l.trim().toUpperCase().match(/^T(\d+)-(M?\d+)-(\d+)-(\d+)-(\d+)-([A-Z0-9]{3})-([A-Z0-9]{4})$/); if(!m) return null;
+  const brut=`${m[1]}-${m[2].replace("M","m")}-${m[3]}-${m[4]}-${m[5]}-${m[6]}`;
+  if(hash(brut)!==m[7]) return {faux:true};
+  return {code:l.trim().toUpperCase(),eq:+m[1],score:m[2][0]==="M"?-m[2].slice(1):+m[2],flags:+m[3],min:+m[4],obj:+m[5],pid:m[6]};
+}
+function ajouter(){
+  const lignes=document.getElementById("in").value.split(/\s+/).filter(Boolean); let ok=0,ko=[],dup=0;
+  for(const l of lignes){const r=lire(l); if(!r||r.faux){ko.push(l+(r?" (code falsifié)":" (illisible)"));continue}
+    if(D.some(d=>d.code===r.code)){dup++;continue} D.push(r);ok++}
+  document.getElementById("in").value="";
+  document.getElementById("msg").innerHTML=`<p class=ok>${ok} ajouté(s)</p>`+(dup?`<p class=warn>${dup} déjà présent(s)</p>`:"")+ko.map(k=>`<p class=bad>Refusé : ${k}</p>`).join("");
+  sauver();vue();
+}
+function vue(){
+  const par={}, refus=D.filter(d=>!connu(d)); D.filter(connu).forEach(d=>(par[d.eq]=par[d.eq]||[]).push(d));
+  document.getElementById("nbdep").textContent=" "+Object.keys(DEP).length+" équipe(s) enregistrée(s)";
+  const L=Object.entries(par).map(([eq,a])=>{
+    a.sort((x,y)=>y.score-x.score||y.obj-x.obj||x.min-y.min||x.flags-y.flags);
+    return {eq,best:a[0],n:new Set(a.map(x=>x.pid)).size,tous:a};
+  }).sort((x,y)=>y.best.score-x.best.score||y.best.obj-x.best.obj||x.best.min-y.best.min||x.best.flags-y.best.flags);
+  document.getElementById("tab").innerHTML=L.length?`<table><tr><th>#</th><th>Équipe</th><th>Score</th><th>Durée (min)</th><th>Indices</th><th>Triches</th><th>Parties</th></tr>`+
+    L.map((r,i)=>`<tr><td>${i+1}</td><td>Équipe ${r.eq}</td><td><b>${r.best.score}</b></td><td>${r.best.min}</td><td>${r.best.obj}/${TOTAL}</td><td>${r.best.flags}</td><td class="${r.n>1?"warn":""}">${r.n>1?r.n+" parties (scores : "+r.tous.map(t=>t.score).join(", ")+")":"1"}</td></tr>`).join("")+"</table>":"";
+  if(refus.length) document.getElementById("tab").innerHTML+=`<p class=bad>Résultats écartés (code d'équipe non enregistré au départ) : ${refus.map(d=>"équipe "+d.eq+" ("+d.pid+", "+d.score+" pts)").join(" · ")}</p>`;
+}
+vue();
+</script></body></html>

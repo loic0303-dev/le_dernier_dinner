@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Le Dernier Dîner – QR codes à imprimer</title>
+<style>
+  body { font-family: Georgia, serif; margin: 0; }
+  .page { width: 210mm; height: 297mm; display: flex; flex-direction: column; page-break-after: always; }
+  .fiche { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-bottom: 1px dashed #999; }
+  .fiche h2 { margin: 0; font-size: 22pt; color: #5a1a24; letter-spacing: .05em; }
+  .fiche .num { font: bold 46pt Georgia; margin: 2mm 0; }
+  .fiche img { width: 85mm; height: 85mm; image-rendering: pixelated; }
+  .fiche p { margin: 2mm 0 0; font-size: 11pt; color: #444; }
+  .noprint { padding: 1em; font-family: sans-serif; background: #ffe; }
+  @media print { .noprint { display: none; } }
+</style>
+</head>
+<body>
+<div class="noprint">2 portes par page A4. Imprimez (Ctrl+P), plastifiez, et prévoyez un double de chaque. Le numéro sous le QR sert à la saisie manuelle si la caméra ne marche pas.</div>
+<div id="pages"></div>
+<script src="lib/qrcode.js"></script>
+<script src="js/donnees.js"></script>
+<script>
+  const pages = document.getElementById("pages");
+  let page;
+  JEU.emplacements.forEach((e, i) => {
+    if (i % 2 === 0) { page = document.createElement("div"); page.className = "page"; pages.append(page); }
+    const qr = qrcode(0, "M"); qr.addData("LDD-" + String(e.n).padStart(2, "0")); qr.make();
+    const f = document.createElement("div"); f.className = "fiche";
+    f.innerHTML = `<h2>LE DERNIER DÎNER</h2><div class="num">Porte ${e.n}</div>
+      <img src="${qr.createDataURL(10, 2)}" alt="QR porte ${e.n}">
+      <p>Scannez avec l'application de l'enquête · Emplacement : ${e.nom}</p>`;
+    page.append(f);
+  });
+</script>
+</body>
+</html>
